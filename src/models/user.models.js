@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) /*Agar sirf password change kre tbhi hashing ho save ke baad vrna aur kuch change krke save kiya toh password ki hasing change krne ki zarurat nai hai*/
         return next()
-    this.password = bcrypt.hash(this.password, 10 /*rounds*/);
+    this.password = await bcrypt.hash(this.password, 10 /*rounds*/);
     next()
 })
 
