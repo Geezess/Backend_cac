@@ -30,7 +30,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //     throw new ApiError(400, "Full Name is Required")
     // }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -39,14 +39,24 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalFile = req.files?.coverImage[0]?.path
+    
+    // For optional file kyuki null accept nai krega url toh hume if condition se check krna padega ki humne ye optional file upload kiya hai ya nahi.
+    let coverImageLocalPath = null;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is Required")
     }
 
+    // console.log("Avatar local path:", avatarLocalPath);
+
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalFile)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    console.log("Avatar uploaded successfully:", avatar.url);
+    // console.log("Cover image uploaded successfully:", coverImage.url);
 
     if (!avatar) {
         throw new ApiError(400, "Avatar is Required")
@@ -68,7 +78,8 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 
     if (!createdUser) {
-        throw new ApiError("Something went wrong while registering the user")
+        console.error("Error creating user:", error);
+        throw new ApiError("Failed to create user: " + error.message);
     }
 
     return res.status(200).json(
